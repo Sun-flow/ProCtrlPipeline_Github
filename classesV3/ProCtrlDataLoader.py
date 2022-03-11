@@ -12,7 +12,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sn
 
 
-
+# Loads in data for all subjects, focuses on overarching structures. High ties to ArmGameV2, which holds subject+session+trial specific data
 class ProCtrlDataLoader:
     def __init__(self, data_path, input_training_groups, input_subjs, input_sessions):
 
@@ -30,12 +30,19 @@ class ProCtrlDataLoader:
         self.confusion_matrix_df = pd.DataFrame(columns = ['SUBJ','GROUP','SESSION','VAL1','VAL2','VAL3','VAL4','VAL5','VAL6','VAL7','VAL8','VAL9'])
 
     
-
+    # Creates a dictionary (self.training_groups) which preserves all file path information [group][subject][session][pre/post_train] = AG_object
     def loaddata(self):
+
+        # Get all file paths below data_path directory
         for root,dirs,files in os.walk(self.data_path, topdown = False):
+
+            # For each file found, do:
             for file in files:
+
+                # Search for string 'ArmGame' in file name. If found, do: 
                 if 'ArmGame' in file:
 
+                    # Splits file string into relevant info, based on known relationships
                     file_path = os.path.join(root,file)
                     split_file_path = file_path.split('/')
                     file_group = split_file_path[len(split_file_path) - 5]
@@ -44,22 +51,31 @@ class ProCtrlDataLoader:
                     pre_post = split_file_path[len(split_file_path) - 2]
                     file_name = split_file_path[len(split_file_path) - 1]
                     
-
+                    # If the 'group' of this file is one of those selected to load (passed in to constructor), do:
                     if file_group in self.training_groups.keys():
                         
+                        # If the current subject is not in the given list of relevant subjects, skip to next run of loop. otherwise, do:
                         if self.subjects_of_interest and subject_code not in self.subjects_of_interest:
                             continue
                         else:
+
+                            # If current session is in list of relevant sessions
                             if session in self.sessions_of_interest:
                                 
+                                #  Create an ArmGameFile object using this current file & subject
                                 ag_file = ArmGameFile(file_path,subject_code)
 
+                                # Check to see if 'classmeans' is in this subject,sessions,prepost's directory. If so, load it's data into AG_object
                                 for root,dir,files in os.walk(root,topdown=False):
                                     for file in files:
                                         if 'ClassMeans' in file:
                                             classmeans_fp = os.path.join(root,file)
                                             ag_file.load_classmeans_file(classmeans_fp)
 
+
+                                # Following conditions set up dictionary with all relevant data.
+
+                                # End format is self.training_groups[group][subject][session][pre/post_train] = AG_file
                                 if not self.training_groups[file_group]:
                                     self.training_groups[file_group] = {subject_code:{session:{pre_post:ag_file}}}
                             
@@ -74,7 +90,7 @@ class ProCtrlDataLoader:
 
                                 
 
-
+    # Creates a Dataframe that includes all confusion matrix values for each subject and set of gestures
     def aggregate_sess_x_group_df(self,which_groups):
         for group in which_groups:
             print(group)
@@ -94,7 +110,7 @@ class ProCtrlDataLoader:
 
         return self.confusion_matrix_df
 
-
+    # Create a confusion matrix for gestures of a particular subject & session (includes both pre & post, if applicable)
     def confuse(self, group, subj, sess, figBOOL):
         hold = pd.DataFrame()
 
