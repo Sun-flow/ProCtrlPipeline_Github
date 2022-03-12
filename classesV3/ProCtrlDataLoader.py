@@ -173,25 +173,22 @@ class ProCtrlDataLoader:
 
 
 
-    # This function is used to output accuracy graphs over time for a single armgame trial. At one point, it functioned to print cumulative accuracy up to current timepoint. Now it maintains cumulative accuracy for only the most recent 25 datapoints.
+    # This function is used to output accuracy graphs over time for many armgame trials. At one point, it functioned to print cumulative accuracy up to current timepoint. Now it maintains cumulative accuracy for only the most recent 25 datapoints.
     # In english:
     #   any timepoint within trial t will be represented on the x axis
     #   cumulative classification accuracy over most recent 25 timepoints on y axis
     #   f(t) = sum(acc(t) + acc(t - 1) + acc(t-2) + ... + acc(t-24)) / 25 
+    #   Each line represents one trial
     # 
     # Inputs: [relevant groups],[relevant subjects], [relevant sessions], [relevant motion classes]
-    # Outputs: Acc graph aggregating over passed in parameters
+    # Outputs: Acc graph aggregating over passed in tags (displays timeline of rolling acc for all runs that meet passed in criteria) 
     # 
-    ### # FIX THESE COMMENTS BC U FORGOT WHAT YR FUNCTION DID U DUMBY BUT THEN U REMEMBERED AFTER U COMMENTED THE WHOLE THING BC U HAD TO ACTUALLY READ UR NUTSO CODE SO GO BACK AND EXPLAIN HOW ACTUALLY THIS FUNCTION PRODUCES one (1) SINGLE GRAPH THAT AGGREGATEs ALL THE ACCURACY LINES YOU ASKED FOR WITH YOUR INPUT PARAMETERS HOLY JEEZ
-    # 
-    # I wrote many of these functions with the idea that I wanted to be able to pass in what subjects I wanted to output at will. So, you could theoretically pass in as many subjects and sessions as you wanted and generate graphs for each.
-    # Typically I am just outputting one at a time, for which this is still totally effective. The group printing was nice when I was at the point of data analysis where I wanted to print these for the whole dataset at once.  
-    # This generality is still very useful for me, as I only need to know what trial tags im looking for and the rest of the data is preloaded. So I don't have to prep or pass in any data, bc it's already present in the DataLoader object.
+    # This generality is very useful for me, as I only need to know what trial tags im looking for and the rest of the data is preloaded. So I don't have to prep or pass in any data, I just tell it what data to utilize, bc it's already present in the DataLoader object.
     # Ideally I would update this function to be a bit more streamlined, but I'm not currently using it for much and it works fine as is. Could be simplified easily nontheless. 
     def print_acc_lines(self, groups, subjects, sessions, motion_classes, title):
 
         i = 0
-        raw_acc_df = pd.DataFrame() # Depreciated line, maintained in case I ever make this function work for cumulative acc again
+        # raw_acc_df = pd.DataFrame() # Depreciated line, maintained in case I ever make this function work for cumulative acc again
         # rolling_acc_df = pd.DataFrame()
 
         chunks = []
@@ -199,7 +196,7 @@ class ProCtrlDataLoader:
         # Get group tag
         for group in groups:
 
-            # Get subject tag, unless none was passed in, then do all of the subjects in that group
+            # Get relevant subject tags, unless none was passed in, then do all of the subjects in that group
             curr_subjs = subjects
             if not subjects:
                 curr_subjs = self.training_groups[group].keys()
@@ -215,32 +212,33 @@ class ProCtrlDataLoader:
                 for session in sessions:
 
                     # If only certain gestures are of interest, select for them. If none were passed in, do all of them. Same as earlier for curr_subjs
-                    # This method is more confusing in code, but more simple when calling the function. Bc of this implementation, I can call a function as such:
-                    # print_acc_lines(['bio','arb'],[],[],['rest','open'], title)   # A call to func
-                    # print_acc_lines(groups,subjects,sessions,gestures,title)      # Default constructor for reference
-                    # This call would output acc graphs for only rest and open (excluding close, pinch, tripod), for every subject and every session in the bio or arb training group
+                    #   This method is more confusing in code, but more simple when calling the function. Bc of this implementation, I can call a function as such:
+                    #   print_acc_lines(['bio','arb'],[],[],['rest','open'], title)   # A call to func
+                    #   print_acc_lines(groups,subjects,sessions,gestures,title)      # Default constructor for reference
+                    #   This call would output acc graphs for only rest and open (excluding close, pinch, tripod), for every subject and every session in the bio or arb training group
                     curr_classes = motion_classes
                     if not motion_classes:
                         curr_classes = ['rest','open','close']
 
-                    # Process graph for each gesture
+                    # Process each gesture of interest
                     for motion_class in curr_classes:
 
                         # Process each trial in the session
                         for pre_post in self.training_groups[group][subject][session].keys():
                             
-                            # Create placeholder var so I don't have to index repeatedly
+                            # Create placeholder var to current subj_sess_trial so I don't have to index repeatedly
                             AG_object = self.training_groups[group][subject][session][pre_post]
 
                             # Calls function that calculates the classifiers accuracy at each time point (assigns a bool value to a column representing whether or not classification == goal). This column is saved in armgame_df.
+                            # Also finds cumulative accuracy for both whole trial and last 25 timepoints of trial 
                             AG_object.calc_acc()                            
                             
-                            # Data is chunked within AG_object based on active trial. Each active trial contains 6 chunks, with goal class: rest -> open -> close -> rest -> open -> close. AG object contains a dict called chunk_bounds, where keys = {'rest','open','close'} and each key maps to an array of tuples for the bounds of each trial.
+                            # Data is chunked within AG_object based on active trial. Each run contains 6 chunks, with goal class order: rest -> open -> close -> rest -> open -> close. AG object contains a dict called chunk_bounds, where keys = {'rest','open','close'} and each key maps to an array of tuples for the bounds of each trial.
                             #
-                            # So AG_object.chunk_bounds['rest'] would return the list [(start1, end1),(start2, end2)]
+                            # So AG_object.chunk_bounds['rest'] would return the list [(start1, end1),(start2, end2)] bc there are two chunks labeled rest, each with its own bounds
                             for bounds in AG_object.chunk_bounds[motion_class]:
 
-                                # Depreciated lines which get accuracy data across bounds
+                                # Depreciated lines which get cumulative accuracy data for chunk
                                 data = AG_object.armgame_df.loc[bounds[0]:bounds[1], 'total_chunk_acc']
                                 data = data.reset_index(drop=True)
 
