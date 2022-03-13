@@ -181,7 +181,7 @@ class ProCtrlDataLoader:
     #   Each line represents one trial
     # 
     # Inputs: [relevant groups],[relevant subjects], [relevant sessions], [relevant motion classes]
-    # Outputs: Acc graph aggregating over passed in tags (displays timeline of rolling acc for all runs that meet passed in criteria) 
+    # Outputs: Acc graph aggregating over passed in tags (displays timeline of rolling acc for all runs that meet passed in criteria). Currently not designed to aggregate across subjects, only within. Will output one graph per subject passed in, which includes acc lines for all session and gesture tags passed in.
     # 
     # This generality is very useful for me, as I only need to know what trial tags im looking for and the rest of the data is preloaded. So I don't have to prep or pass in any data, I just tell it what data to utilize, bc it's already present in the DataLoader object.
     # Ideally I would update this function to be a bit more streamlined, but I'm not currently using it for much and it works fine as is. Could be simplified easily nontheless. 
@@ -249,17 +249,22 @@ class ProCtrlDataLoader:
                                 # Create plot title out of relevant tags
                                 column_title = subject + '_' + session + '_' + motion_class + '_' + pre_post + str(i)
 
-                                # 
+                                # Inserts line into a dataframe which is storing all lines to be printed
                                 #raw_acc_df.insert(loc=i,column=i, value=data)
                                 rolling_acc_df.insert(loc=i,column=column_title, value=roll_data)
                                 i += 1
 
-                per_subj_title = title + subject
 
+                # Makes a title which includes whatever was passed into function as title and subject code
+                per_subj_title = title + subject
+                
+                # Plots acc lines
                 per_subj_lines = rolling_acc_df.plot.line(title = per_subj_title)
                 
+                # Saves fig
                 per_subj_lines.figure.savefig('./figs/acc_line_plts/' + per_subj_title)
 
+                # Returns the plot, potentially useful if I want to used the plot externally to the function. Depreciated, bc when I wrote this I didn't really understand plots. In the future I would update this to pass out the fig object, instead of the plot object. 
                 return per_subj_lines
 
         #hold = raw_acc_df.plot.line(title = title)
