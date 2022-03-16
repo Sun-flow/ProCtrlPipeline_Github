@@ -194,7 +194,7 @@ class ArmGameFile:
 
     # Calculates average distance of current EMG readout to a single raw emg feature (f1_gesture)
     # Input: Relevant gesture
-    # Output: datafram of each channel's current distance from the gestures f1 averages
+    # Output: dataframe of each channel's current distance from the gestures f1 averages
     def diff_from_f1(self,gesture):
 
         f1_vals = self.feature_df.loc[(gesture,1):(gesture,8),1].tolist()
