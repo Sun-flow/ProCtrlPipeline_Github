@@ -18,7 +18,7 @@ class ProCtrlDataLoader:
 
         self.data_path = data_path
 
-        self.training_groups = dict.fromkeys(input_training_groups)
+        self.data_dict = dict.fromkeys(input_training_groups)
 
         self.subjects_of_interest = input_subjs
 
@@ -30,7 +30,7 @@ class ProCtrlDataLoader:
         self.confusion_matrix_df = pd.DataFrame(columns = ['SUBJ','GROUP','SESSION','VAL1','VAL2','VAL3','VAL4','VAL5','VAL6','VAL7','VAL8','VAL9'])
 
     
-    # Creates a dictionary (self.training_groups) which preserves all file path information [group][subject][session][pre/post_train] = AG_object
+    # Creates a dictionary (self.data_dict) which preserves all file path information [group][subject][session][pre/post_train] = AG_object
     def loaddata(self):
 
         # Get all file paths below data_path directory
@@ -52,7 +52,7 @@ class ProCtrlDataLoader:
                     file_name = split_file_path[len(split_file_path) - 1]
                     
                     # If the 'group' of this file is one of those selected to load (passed in to constructor), do:
-                    if file_group in self.training_groups.keys():
+                    if file_group in self.data_dict.keys():
                         
                         # If the current subject is not in the given list of relevant subjects, skip to next run of loop. otherwise, do:
                         if self.subjects_of_interest and subject_code not in self.subjects_of_interest:
@@ -74,7 +74,7 @@ class ProCtrlDataLoader:
 
 
                                 # The following conditions set up dictionary with all relevant data.
-                                # End format is self.training_groups[group][subject][session][pre/post_train] = AG_file
+                                # End format is self.data_dict[group][subject][session][pre/post_train] = AG_file
 
                                 #######
                                 # Basic method is:
@@ -88,17 +88,17 @@ class ProCtrlDataLoader:
                                 #   Add {Pre/Post = AG_object} to Session 
                                 ########
 
-                                if not self.training_groups[file_group]:
-                                    self.training_groups[file_group] = {subject_code:{session:{pre_post:ag_file}}}
+                                if not self.data_dict[file_group]:
+                                    self.data_dict[file_group] = {subject_code:{session:{pre_post:ag_file}}}
                             
-                                if subject_code not in self.training_groups[file_group]:
-                                    self.training_groups[file_group][subject_code] = {session:{pre_post:ag_file}}
+                                if subject_code not in self.data_dict[file_group]:
+                                    self.data_dict[file_group][subject_code] = {session:{pre_post:ag_file}}
 
-                                if session not in self.training_groups[file_group][subject_code]:
-                                    self.training_groups[file_group][subject_code][session] = {pre_post:ag_file}
+                                if session not in self.data_dict[file_group][subject_code]:
+                                    self.data_dict[file_group][subject_code][session] = {pre_post:ag_file}
 
-                                if pre_post not in self.training_groups[file_group][subject_code][session]:
-                                    self.training_groups[file_group][subject_code][session][pre_post] = ag_file
+                                if pre_post not in self.data_dict[file_group][subject_code][session]:
+                                    self.data_dict[file_group][subject_code][session][pre_post] = ag_file
 
                                 
 
@@ -108,13 +108,12 @@ class ProCtrlDataLoader:
         
         # For Every group in passed in selection of groups
         for group in which_groups:
-            print(group)
 
             # For each participant(key) in that group
-            for participant in self.training_groups[group].keys():
+            for participant in self.data_dict[group].keys():
 
                 # For each session(key) in that participant
-                for sess in self.training_groups[group][participant].keys():
+                for sess in self.data_dict[group][participant].keys():
 
                     # Run member function .confuse() on relevant tags, returns cm value for each gesture pair
                     cm = self.confuse(group,participant,sess,False)
@@ -148,9 +147,9 @@ class ProCtrlDataLoader:
         hold = pd.DataFrame()
 
         # Populate hold by concatenating pre and post dfs. Includes all active trial timepoints for the entire session. 
-        for pre_post in self.training_groups[group][subj][sess].keys():
+        for pre_post in self.data_dict[group][subj][sess].keys():
             if 'trained' in pre_post:
-                hold = pd.concat([hold, self.training_groups[group][subj][sess][pre_post].armgame_df])
+                hold = pd.concat([hold, self.data_dict[group][subj][sess][pre_post].armgame_df])
 
         # Run sklearn's confusion matrix function on hold, comparing classifier output to goal output
         cm = confusion_matrix(hold['class'], hold['goal'])
@@ -167,9 +166,9 @@ class ProCtrlDataLoader:
     # This is a depreciated function that I used to make sure I was creating my dictionaries properly. No longer of need, yet it persists in the code, waiting, for some such lonely night that I call to it, once again, to print for me.
     def printDict(self):
         pp = pprint.PrettyPrinter(depth=4)
-        for group in self.training_groups:
+        for group in self.data_dict:
             pp.pprint(group)
-            print(*self.training_groups[group].keys())
+            print(*self.data_dict[group].keys())
 
 
 
@@ -199,7 +198,7 @@ class ProCtrlDataLoader:
             # Get relevant subject tags, unless none was passed in, then do all of the subjects in that group
             curr_subjs = subjects
             if not subjects:
-                curr_subjs = self.training_groups[group].keys()
+                curr_subjs = self.data_dict[group].keys()
             
             # Process each subject of interest
             for subject in curr_subjs:
@@ -224,10 +223,10 @@ class ProCtrlDataLoader:
                     for motion_class in curr_classes:
 
                         # Process each trial in the session
-                        for pre_post in self.training_groups[group][subject][session].keys():
+                        for pre_post in self.data_dict[group][subject][session].keys():
                             
                             # Create placeholder var to current subj_sess_trial so I don't have to index repeatedly
-                            AG_object = self.training_groups[group][subject][session][pre_post]
+                            AG_object = self.data_dict[group][subject][session][pre_post]
 
                             # Calls function that calculates the classifiers accuracy at each time point (assigns a bool value to a column representing whether or not classification == goal). This column is saved in armgame_df.
                             # Also finds cumulative accuracy for both whole trial and last 25 timepoints of trial 
