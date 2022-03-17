@@ -18,22 +18,23 @@ class targetClass(Enum):
 class ArmGameFile:
     def __init__(self,file_path, subject):
 
-        self.armgame_df = pd.read_csv(file_path)
-        self.subject = subject
+        self.armgame_df = pd.read_csv(file_path) # Holds data from ArmGame csv
+        self.subject = subject # holds subject code
 
-        self.raw_cm_features = pd.DataFrame()
-        self.feature_df = pd.DataFrame()
-        self.f1_distances = pd.DataFrame(columns=range(1,9))
+        self.raw_cm_features = pd.DataFrame() # Holds raw classmeans features from classmeans file
+        self.feature_df = pd.DataFrame() # Holds organized features df, a reconstruction of raw_cm_features
+        self.f1_distances = pd.DataFrame(columns=range(1,9)) # Holds distances of raw EMG to each f1 EMG avg
 
-        if not self.armgame_df.empty:
+        # If armgame_df exists, drop unnecessary columns
+        if not self.armgame_df.empty: 
             self.clip_data()
 
-        self.chunk_bounds = {'rest':[],'open':[],'close':[],'pinch':[],'tripod':[]}
+        self.chunk_bounds = {'rest':[],'open':[],'close':[],'pinch':[],'tripod':[]} # Dictionary which will hold tuples of (start,end) for the indexes of each chunk
 
-        self.armgame_df['goal'] = 0
-        self.armgame_df['total_acc'] = 0
+        self.armgame_df['goal'] = 0 # Add important column to ag_df
+        self.armgame_df['total_acc'] = 0 # same
 
-        self.set_goals(['rest','open','close','rest','open','close'])
+        self.set_goals(['rest','open','close','rest','open','close']) # Construct goal classification order
 
 
 
