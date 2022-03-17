@@ -1,3 +1,5 @@
+import pandas as pd
+
 # Gets distance of each timepoint's raw EMG to the avg f1 of each gesture. Then, performs classification based on which of the distances are shortest. Most of the loop in this function serves to remove non-trial datapoints.
 # Inputs: AG_object
 # Output: List of List of distances for each gesture at each time point.
@@ -69,17 +71,17 @@ def dataset_f1_agreement(DataSet):
 
     temp_df = pd.DataFrame(columns=['group','subj','sess','f1_class_acc','coapt_class_acc','f1_coapt_agreement'])
 
-    for group in DataSet.training_groups:
-        for participant in DataSet.training_groups[group].keys():
+    for group in DataSet.data_dict:
+        for participant in DataSet.data_dict[group].keys():
             if 'bi05' in participant:
                 continue
-            for sess in DataSet.training_groups[group][participant].keys():
+            for sess in DataSet.data_dict[group][participant].keys():
                 temp_acc_values = [0,0,0]
                 for prepost in ['pre_trained','post_trained']:
                     print(group,participant,sess,prepost)
-                    if prepost not in DataSet.training_groups[group][participant][sess].keys():
+                    if prepost not in DataSet.data_dict[group][participant][sess].keys():
                         continue
-                    temp_ag_object = DataSet.training_groups[group][participant][sess][prepost]
+                    temp_ag_object = DataSet.data_dict[group][participant][sess][prepost]
                     temp_f1_classifier = classify_raw_emg_over_f1(temp_ag_object)
                     junk_df,hold_acc_values = get_accuracy_for_f1_classifier(temp_f1_classifier) 
 
