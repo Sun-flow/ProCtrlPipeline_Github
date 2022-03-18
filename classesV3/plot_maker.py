@@ -29,7 +29,7 @@ def make_worm(data, group,subj,sess,gesture,prepost, which_worm):
 # Sets up a radar plot for later plotting.
 # Inputs: figure object, 'categories' or axis that are being plotted on (in this case, basically always emg channels for me), gridspec values (values which determine where the radarplot exists in a larger plot, default to [1,1,1])
 # Outputs: radar ax object (subplot object, can be manipulated later), ANGLES list (includes some relevant shape data about plot) 
-def radar_plot_setup(fig,categories,gridspec=[1,1,1]):
+def radar_plot_setup(fig,categories,gridspec=111):
 
     # Determines number of axis to plot over
     spokes = len(categories)
@@ -57,7 +57,7 @@ def radar_plot_setup(fig,categories,gridspec=[1,1,1]):
 # Same as above, but for a line graph. Much simpler setup.
 # Inputs: fig object you want the line graph attached to, acc_line data, gridspec value (position on fig, if multiple subplots present)
 # Outputs: line ax object (line graph subplot)
-def acc_plot_setup(fig, acc_line, gridspec=[1,1,1]):
+def acc_plot_setup(fig, acc_line, gridspec=111):
 
     line_ax = fig.add_subplot(gridspec, polar=False)
 
@@ -100,7 +100,7 @@ def f1_radar_plot(ag_object, title, save_path):
     fig.savefig(save_path) # save file to relevant path
 
 
-def worm_accuracy_plot(ag_object, bounds, title, which_worm = 'raw_emg'):
+def worm_accuracy_plot(ag_object, bounds, title, file_destination, which_worm = 'raw_emg'):
     raw_emg_df = ag_object.armgame_df
     f1_diff_df = ag_object.f1_distances
 
@@ -163,7 +163,7 @@ def worm_accuracy_plot(ag_object, bounds, title, which_worm = 'raw_emg'):
 
     ani = FuncAnimation(fig,callback_func,frames=frames,interval=25,blit=True,repeat=True)
 
-    file_path = 'worms/' + which_worm + '/' + title + '.gif'
+    file_path = file_destination + which_worm + '/' + title + '.gif'
 
     print('save ani: ' + file_path)
 
