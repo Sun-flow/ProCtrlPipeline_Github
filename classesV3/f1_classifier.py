@@ -49,47 +49,49 @@ def classify_raw_emg_over_f1(ag_object):
 
 # Determines accuracy for each classifier, as well as the agreement between classifiers
 def get_accuracy_for_f1_classifier(f1_classifier_df):
-    temp_df = pd.DataFrame(columns=['f1_class_acc','coapt_class_acc', 'f1_coapt_agreement'])
+    temp_df = pd.DataFrame(columns=['f1_class_acc','coapt_class_acc', 'f1_coapt_agreement']) # Build temp df with necessary columns
 
-    temp_df['f1_class_acc'] = pd.to_numeric(f1_classifier_df['f1_dist_class']) & f1_classifier_df['goal_output']
+    # Populate columns of temp_df by comparing values from the classifier_df produced in the last function. places 1s where vals in compared columns are ==, and 0 where !=
+    temp_df['f1_class_acc'] = pd.to_numeric(f1_classifier_df['f1_dist_class']) & f1_classifier_df['goal_output'] # Set f1 class acc to boolean assertion of goal output & f1_class
+    temp_df['coapt_class_acc'] = f1_classifier_df['coapt_class'] & pd.to_numeric(f1_classifier_df['goal_output']) # Set coapt class acc to boolean assertion of goal output & coapt_class
+    temp_df['f1_coapt_agreement'] = pd.to_numeric(f1_classifier_df['f1_dist_class']) & f1_classifier_df['coapt_class'] # Set agreement between classifiers to assertion of f1_class & coapt_class
 
-    temp_df['coapt_class_acc'] = f1_classifier_df['coapt_class'] & pd.to_numeric(f1_classifier_df['goal_output'])
-
-    temp_df['f1_coapt_agreement'] = pd.to_numeric(f1_classifier_df['f1_dist_class']) & f1_classifier_df['coapt_class']
-
+    # Find acc percentages by summing columns & dividing by length of column. Save outputs into holder vars.
     f1_class_acc = sum(temp_df['f1_class_acc']) / len(temp_df)
     coapt_class_acc = sum(temp_df['coapt_class_acc']) / len(temp_df)
     f1_coapt_agreement = sum(temp_df['f1_coapt_agreement']) / len(temp_df)
 
+    # Build list of accuracies to be returned. 
     temp_accuracies = [f1_class_acc,coapt_class_acc,f1_coapt_agreement]
 
     return temp_df, temp_accuracies
 
 
-
+# Check the agreement between the f1 classifier and the coapt classifier
 def dataset_f1_agreement(DataSet):
 
-    temp_df = pd.DataFrame(columns=['group','subj','sess','f1_class_acc','coapt_class_acc','f1_coapt_agreement'])
+    temp_df = pd.DataFrame(columns=['group','subj','sess','f1_class_acc','coapt_class_acc','f1_coapt_agreement']) # Build temp df with proper column names
 
-    for group in DataSet.data_dict:
-        for participant in DataSet.data_dict[group].keys():
-            if 'bi05' in participant:
+    for group in DataSet.data_dict: # Run each group in loaded DataSet
+        for participant in DataSet.data_dict[group].keys(): # Run each participant in current group
+            if 'bi05' in participant: # Skip this one problem participant (bandaid solution, they are missing data)
                 continue
-            for sess in DataSet.data_dict[group][participant].keys():
+            for sess in DataSet.data_dict[group][participant].keys(): # Run each session for this participant
                 temp_acc_values = [0,0,0]
-                for prepost in ['pre_trained','post_trained']:
-                    print(group,participant,sess,prepost)
-                    if prepost not in DataSet.data_dict[group][participant][sess].keys():
+                i = 0
+                for prepost in ['pre_trained','post_trained']: # Run each trial in this session. I am averaging within session, so this loop is responsible for getting data from each trial and avging it.
+                    if prepost not in DataSet.data_dict[group][participant][sess].keys(): # If one of the trials is not present, skip
                         continue
-                    temp_ag_object = DataSet.data_dict[group][participant][sess][prepost]
-                    temp_f1_classifier = classify_raw_emg_over_f1(temp_ag_object)
-                    junk_df,hold_acc_values = get_accuracy_for_f1_classifier(temp_f1_classifier) 
+                    temp_ag_object = DataSet.data_dict[group][participant][sess][prepost] # Get AG_object
+                    temp_f1_classifier = classify_raw_emg_over_f1(temp_ag_object) # Run classifier over data
+                    junk_df,hold_acc_values = get_accuracy_for_f1_classifier(temp_f1_classifier) # Get classifier accuracy
 
-                    temp_acc_values = [a + b for a, b in zip(temp_acc_values,hold_acc_values)]  
+                    temp_acc_values = [a + b for a, b in zip(temp_acc_values,hold_acc_values)]  # Add found acc values to prepped list
+                    i += 1
                 
-                temp_acc_values = [x / 2 for x in temp_acc_values]
-                new_row = [group,participant,sess,*temp_acc_values]
-                temp_df.loc[len(temp_df)] = new_row
+                temp_acc_values = [x / i for x in temp_acc_values] # When all trials in this sess have been added, divide by number of trials
+                new_row = [group,participant,sess,*temp_acc_values] # Create new row to append to temp_df with values found for this subj+sess
+                temp_df.loc[len(temp_df)] = new_row # Append new row to temp_df
 
 
-    return temp_df
+    return temp_df # Return dataframe of acc / agreement values 
