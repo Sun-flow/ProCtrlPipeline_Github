@@ -17,7 +17,6 @@ class targetClass(Enum):
 # Class responsible for maintaining information about a single trial in a single session
 class ArmGameFile:
     def __init__(self,file_path, subject):
-
         self.armgame_df = pd.read_csv(file_path) # Holds data from ArmGame csv
         self.subject = subject # holds subject code
 

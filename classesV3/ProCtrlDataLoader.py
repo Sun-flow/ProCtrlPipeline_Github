@@ -64,7 +64,8 @@ class ProCtrlDataLoader:
                                 
                                 #  Create an ArmGameFile object using this current file & subject
                                 ag_file = ArmGameFile(file_path,subject_code)
-
+                              
+                                print('loading: ', subject_code, ' ', session, ' ', pre_post)
                                 # Check to see if 'classmeans' is in this subject,sessions,prepost's directory. If so, load it's data into AG_object
                                 for root,dir,files in os.walk(root,topdown=False):
                                     for file in files:
@@ -151,6 +152,7 @@ class ProCtrlDataLoader:
             if 'trained' in pre_post:
                 hold = pd.concat([hold, self.data_dict[group][subj][sess][pre_post].armgame_df])
 
+
         # Run sklearn's confusion matrix function on hold, comparing classifier output to goal output
         cm = confusion_matrix(hold['class'], hold['goal'])
 
@@ -169,6 +171,10 @@ class ProCtrlDataLoader:
         for group in self.data_dict:
             pp.pprint(group)
             print(*self.data_dict[group].keys())
+
+
+
+    
 
 
 
@@ -217,7 +223,7 @@ class ProCtrlDataLoader:
                     #   This call would output acc graphs for only rest and open (excluding close, pinch, tripod), for every subject and every session in the bio or arb training group
                     curr_classes = motion_classes
                     if not motion_classes:
-                        curr_classes = ['rest','open','close']
+                        curr_classes = ['rest','open','close','pinch','tripod']
 
                     # Process each gesture of interest
                     for motion_class in curr_classes:
