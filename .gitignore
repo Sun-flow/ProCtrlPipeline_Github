@@ -2,6 +2,9 @@
 *.csv
 *.png
 *.zip
+*.DS_Store
 5x5_ArmGameData/cm_dfs/100tp/.DS_Store
 5x5_ArmGameData/.DS_Store
 5x5_ArmGameData/split/.DS_Store
+*.pyc
+*.flf
